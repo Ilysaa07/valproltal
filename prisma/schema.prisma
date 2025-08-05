@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskAssignmentType {
+  SPECIFIC
+  ALL_EMPLOYEES
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  password          String
+  fullName          String
+  address           String?
+  gender            Gender?
+  nikKtp            String?    @unique
+  phoneNumber       String?
+  bankAccountNumber String?
+  ewalletNumber     String?
+  role              Role       @default(EMPLOYEE)
+  status            UserStatus @default(PENDING)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  assignedTasks     Task[]           @relation("TaskAssignee")
+  createdTasks      Task[]           @relation("TaskCreator")
+  taskSubmissions   TaskSubmission[]
+  notifications     Notification[]
+  transactions      Transaction[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String               @id @default(cuid())
+  title       String
+  description String
+  dueDate     DateTime?
+  status      TaskStatus           @default(NOT_STARTED)
+  assignment  TaskAssignmentType
+  createdById String
+  assigneeId  String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  // Relations
+  createdBy     User               @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  assignee      User?              @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  submissions   TaskSubmission[]
+  notifications Notification[]
+
+  @@map("tasks")
+}
+
+model TaskSubmission {
+  id           String    @id @default(cuid())
+  taskId       String
+  userId       String
+  description  String?
+  documentUrl  String?
+  documentName String?
+  documentSize Int?
+  submittedAt  DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  task         Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_submissions")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionCategory {
+  // Income categories
+  SALARY
+  BONUS
+  COMMISSION
+  OTHER_INCOME
+  
+  // Expense categories
+  OFFICE_SUPPLIES
+  UTILITIES
+  RENT
+  MARKETING
+  TRAVEL
+  MEALS
+  EQUIPMENT
+  SOFTWARE
+  TRAINING
+  OTHER_EXPENSE
+}
+
+model Transaction {
+  id          String              @id @default(cuid())
+  type        TransactionType
+  category    TransactionCategory
+  amount      Decimal             @db.Decimal(15, 2)
+  description String
+  date        DateTime
+  createdById String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  createdBy   User                @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  taskId    String?
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+

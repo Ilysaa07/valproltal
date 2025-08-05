@@ -1,0 +1,17 @@
+-- CreateTable
+CREATE TABLE `transactions` (
+    `id` VARCHAR(191) NOT NULL,
+    `type` ENUM('INCOME', 'EXPENSE') NOT NULL,
+    `category` ENUM('SALARY', 'BONUS', 'COMMISSION', 'OTHER_INCOME', 'OFFICE_SUPPLIES', 'UTILITIES', 'RENT', 'MARKETING', 'TRAVEL', 'MEALS', 'EQUIPMENT', 'SOFTWARE', 'TRAINING', 'OTHER_EXPENSE') NOT NULL,
+    `amount` DECIMAL(15, 2) NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `date` DATETIME(3) NOT NULL,
+    `createdById` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `transactions` ADD CONSTRAINT `transactions_createdById_fkey` FOREIGN KEY (`createdById`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
